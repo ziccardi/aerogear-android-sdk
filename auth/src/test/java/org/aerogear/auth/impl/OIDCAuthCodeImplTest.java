@@ -4,6 +4,8 @@ import org.aerogear.auth.AuthServiceConfig;
 import org.aerogear.auth.AuthenticationException;
 import org.aerogear.auth.credentials.ICredential;
 import org.aerogear.auth.credentials.OIDCCredentials;
+import org.apache.commons.io.IOUtils;
+import org.apache.tools.ant.taskdefs.Classloader;
 import org.json.JSONException;
 import org.json.JSONObject;
 import org.junit.Before;
@@ -14,6 +16,7 @@ import org.mockito.MockitoAnnotations;
 import org.robolectric.RobolectricTestRunner;
 
 import java.io.IOException;
+import java.io.InputStream;
 import java.nio.charset.Charset;
 import java.nio.file.Files;
 import java.nio.file.Paths;
@@ -32,7 +35,7 @@ public class OIDCAuthCodeImplTest {
 
     private OIDCAuthCodeImpl authenticator;
 
-    private static final String AUTH_SERVICE_CONFIG_PATH = System.getProperty("user.dir") + "/auth/src/test/java/org/aerogear/auth/impl/AuthServiceConfigTest.json";
+    private static final String AUTH_SERVICE_CONFIG_PATH = "auth/src/test/java/org/aerogear/auth/impl/AuthServiceConfigTest.json";
 
     private ICredential credential = new OIDCCredentials() {
       @Override
@@ -49,8 +52,8 @@ public class OIDCAuthCodeImplTest {
 
     @Test
     public void testAuthenticate() throws AuthenticationException, IOException, JSONException  {
-        byte[] encodedJSONFile = Files.readAllBytes(Paths.get(AUTH_SERVICE_CONFIG_PATH));
-        String JSONString = new String(encodedJSONFile, Charset.forName("UTF-8"));
+        String JSONString = IOUtils.toString(this.getClass().getResourceAsStream("AuthServiceConfigTest.json"));
+        //String JSONString = new String(encodedJSONFile, Charset.forName("UTF-8"));
         JSONObject authJSON = new JSONObject(JSONString);
 
         when(mockConfig.toJSON()).thenReturn(authJSON);
