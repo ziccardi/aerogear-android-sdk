@@ -188,8 +188,12 @@ public class OIDCCredentials implements ICredential {
         try {
             final JSONObject jsonCredential = new JSONObject(serializedCredential);
             final String serializedAuthState = jsonCredential.getString("authState");
-            final String serializedIntegrityChecks = jsonCredential.getString("integrityCheck");
-            final IntegrityCheckParameters icParams = IntegrityCheckParameters.deserialize(serializedIntegrityChecks);
+            // Allow for integrity check to not exist in the JSONObject
+            IntegrityCheckParameters icParams = null;
+            if (jsonCredential.has("integrityCheck")) {
+                final String serializedIntegrityChecks = jsonCredential.getString("integrityCheck");
+                icParams = IntegrityCheckParameters.deserialize(serializedIntegrityChecks);
+            }
             return new OIDCCredentials(serializedAuthState, icParams);
         } catch(JSONException e) {
             throw new IllegalArgumentException(e);

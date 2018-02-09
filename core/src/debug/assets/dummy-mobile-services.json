@@ -2,13 +2,13 @@
     "services": [
         {
             "config": {
-                "auth-server-url": "http://keycloak-myproject.192.168.37.1.nip.io/auth",
-                "clientId": "OeFYkwEuUKXvDsSudfXc",
+                "auth-server-url": "https://keycloak-noop.192.168.37.1.nip.io/auth",
+                "clientId": "RjevWDrtcSTZeDwhoYnS",
                 "headers": {},
-                "realm": "myproject",
-                "resource": "OeFYkwEuUKXvDsSudfXc",
+                "realm": "noop",
+                "resource": "RjevWDrtcSTZeDwhoYnS",
                 "ssl-required": "external",
-                "url": "http://keycloak-myproject.192.168.37.1.nip.io/auth"
+                "url": "https://keycloak-noop.192.168.37.1.nip.io/auth"
             },
             "name": "keycloak"
         },

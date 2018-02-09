@@ -1,5 +1,6 @@
 package org.aerogear.mobile.example.ui;
 
+import android.content.Intent;
 import android.os.Bundle;
 import android.support.annotation.NonNull;
 import android.support.design.widget.NavigationView;
@@ -8,8 +9,12 @@ import android.support.v4.view.GravityCompat;
 import android.support.v4.widget.DrawerLayout;
 import android.support.v7.app.ActionBarDrawerToggle;
 import android.support.v7.widget.Toolbar;
+import android.util.Log;
 import android.view.MenuItem;
 
+import org.aerogear.android.ags.auth.AuthService;
+import org.aerogear.android.ags.auth.Callback;
+import org.aerogear.android.ags.auth.IUserPrincipal;
 import org.aerogear.mobile.example.R;
 
 import butterknife.BindView;
@@ -17,6 +22,8 @@ import butterknife.ButterKnife;
 
 public class MainActivity extends BaseActivity
     implements NavigationView.OnNavigationItemSelectedListener {
+
+    private AuthFragment authFragment;
 
     @BindView(R.id.toolbar)
     Toolbar toolbar;
@@ -61,6 +68,10 @@ public class MainActivity extends BaseActivity
             case R.id.nav_http:
                 navigateTo(new HttpFragment());
                 break;
+            case R.id.nav_auth:
+                authFragment = new AuthFragment();
+                navigateTo(authFragment);
+                break;
             default:
                 navigateTo(new HomeFragment());
                 break;
@@ -68,6 +79,25 @@ public class MainActivity extends BaseActivity
 
         drawer.closeDrawer(GravityCompat.START);
         return true;
+    }
+
+    @Override
+    public void onActivityResult(int requestCode, int resultCode, Intent data) {
+        if (requestCode == AuthService.LOGIN_REQUEST_CODE) {
+            AuthService authService = (AuthService) mobileCore.getInstance(AuthService.class);
+            authService.handleAuthResponse(data, new Callback<IUserPrincipal>() {
+                @Override
+                public void onSuccess(IUserPrincipal user) {
+                    authFragment.addElement("You are logged in!");
+                    authFragment.addElement("Username", user.getName());
+                }
+
+                @Override
+                public void onError(Throwable error) {
+                    authFragment.addElement("Login failed", error.getMessage());
+                }
+            });
+        }
     }
 
     private void navigateTo(Fragment fragment) {

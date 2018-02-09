@@ -1,0 +1,22 @@
+{
+    "version": 1,
+    "clusterName": "replaceme",
+    "namespace": "replaceme",
+    "clientId": "replaceme",
+    "services": [
+        {
+            "id": "replaceme",
+            "name": "replaceme",
+            "type": "replaceme",
+            "url": "replaceme",
+            "config": {
+                "auth-server-url": "replaceme",
+                "clientId": "replaceme",
+                "realm": "replaceme",
+                "resource": "replaceme",
+                "ssl-required": "replaceme",
+                "url": "replaceme"
+            }
+        }
+    ]
+}

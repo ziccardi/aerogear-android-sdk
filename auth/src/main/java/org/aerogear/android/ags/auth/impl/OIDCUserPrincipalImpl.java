@@ -25,13 +25,13 @@ public class OIDCUserPrincipalImpl extends UserPrincipalImpl {
         super(username, credentials, email, roles, authenticator);
     }
 
-    static class Builder extends UserPrincipalImpl.Builder {
-        private Builder() {
+    public static class Builder extends UserPrincipalImpl.Builder {
+        public Builder() {
             super();
         }
 
         @Override
-        OIDCUserPrincipalImpl build() {
+        public OIDCUserPrincipalImpl build() {
             return new OIDCUserPrincipalImpl(
                     this.username,
                     (OIDCCredentials) this.credentials,

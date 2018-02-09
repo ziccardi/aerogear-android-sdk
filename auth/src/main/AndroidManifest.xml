@@ -1,1 +1,3 @@
-<manifest xmlns:android="http://schemas.android.com/apk/res/android" package="org.aerogear.android.auth" />
+<manifest xmlns:android="http://schemas.android.com/apk/res/android" package="org.aerogear.android.auth">
+    <application android:networkSecurityConfig="@xml/network_security_config"></application>
+</manifest>

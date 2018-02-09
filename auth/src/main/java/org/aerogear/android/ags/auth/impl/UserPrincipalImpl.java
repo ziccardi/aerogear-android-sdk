@@ -1,10 +1,15 @@
 package org.aerogear.android.ags.auth.impl;
 
+import android.util.Base64;
+
 import org.aerogear.android.ags.auth.AbstractAuthenticator;
 import org.aerogear.android.ags.auth.AbstractPrincipal;
 import org.aerogear.android.ags.auth.RoleType;
 import org.aerogear.android.ags.auth.UserRole;
 import org.aerogear.android.ags.auth.credentials.ICredential;
+import org.aerogear.android.ags.auth.credentials.OIDCCredentials;
+import org.json.JSONException;
+import org.json.JSONObject;
 
 import java.util.Collections;
 import java.util.HashSet;
@@ -16,6 +21,9 @@ import java.util.Set;
  * This class represent an authenticated user
  */
 public class UserPrincipalImpl extends AbstractPrincipal {
+
+    private static final String USERNAME = "preferred_username";
+    private static final String EMAIL = "email";
 
     /**
      * The username of the principal.
@@ -60,27 +68,27 @@ public class UserPrincipalImpl extends AbstractPrincipal {
     /**
      * Builds and return a UserPrincipalImpl object
      */
-    static class Builder {
+    public static class Builder {
         protected String username;
         protected String email;
         protected HashSet<UserRole> roles = new HashSet<>();
         protected AbstractAuthenticator authenticator;
         protected ICredential credentials;
 
-        protected Builder() {
+        public Builder() {
         }
 
-        Builder withUsername(final String username) {
+        public Builder withUsername(final String username) {
             this.username = username;
             return this;
         }
 
-        Builder withCredentials(final ICredential credentials) {
+        public Builder withCredentials(final ICredential credentials) {
             this.credentials = credentials;
             return this;
         }
 
-        Builder withEmail(final String email) {
+        public Builder withEmail(final String email) {
             this.email = email;
             return this;
         }
@@ -92,18 +100,21 @@ public class UserPrincipalImpl extends AbstractPrincipal {
             return this;
         }
 
-        Builder withAuthenticator(AbstractAuthenticator authenticator) {
+        public Builder withAuthenticator(AbstractAuthenticator authenticator) {
             this.authenticator = authenticator;
             return this;
         }
 
-        UserPrincipalImpl build() {
+        public UserPrincipalImpl build() throws JSONException, AuthenticationException {
+            JSONObject userInformation = UserPrincipalImpl.getIdentityInformation(this.credentials);
+            String username = UserPrincipalImpl.parseUsername(userInformation);
+            String email = UserPrincipalImpl.parseEmail(userInformation);
             return new UserPrincipalImpl(
-                    this.username,
-                    this.credentials,
-                    this.email,
-                    this.roles,
-                    this.authenticator);
+                username,
+                this.credentials,
+                email,
+                this.roles,
+                this.authenticator);
         }
     }
 
@@ -150,6 +161,62 @@ public class UserPrincipalImpl extends AbstractPrincipal {
 
     public static Builder newUser() {
         return new Builder();
+    }
+
+    // TODO: All of this is provided in a different PR and can be removed.
+    /**
+     * Parses the user's username from the user identity
+     *
+     * @return user's username
+     * @throws JSONException
+     */
+    private static String parseUsername(JSONObject userIdentity) throws JSONException {
+        String username = "Unknown Username";
+        if (userIdentity != null) {
+            // get the users username
+            if (userIdentity.has(USERNAME) && userIdentity.getString(USERNAME).length() > 0) {
+                username = userIdentity.getString(USERNAME);
+            }
+        }
+        return username;
+    }
+
+    /**
+     * Parses the user's email address from the user identity
+     *
+     * @return user's email address
+     * @throws JSONException
+     */
+    private static String parseEmail(JSONObject userIdentity) throws JSONException {
+        String emailAddress = "Unknown Email";
+        if (userIdentity != null) {
+            // get the users email
+            if (userIdentity.has(EMAIL) && userIdentity.getString(EMAIL).length() > 0) {
+                emailAddress = userIdentity.getString(EMAIL);
+            }
+        }
+        return emailAddress;
+    }
+
+    private static JSONObject getIdentityInformation(final ICredential credential) throws JSONException, AuthenticationException {
+        String accessToken = ((OIDCCredentials) credential).getAccessToken();
+        JSONObject decodedIdentityData = new JSONObject();
+
+        try {
+            // Decode the Access Token to Extract the Identity Information
+            String[] splitToken = accessToken.split("\\.");
+            byte[] decodedBytes = Base64.decode(splitToken[1], Base64.URL_SAFE);
+            String decoded = new String(decodedBytes, "UTF-8");
+            try {
+                decodedIdentityData = new JSONObject(decoded);
+            } catch (JSONException e) {
+                throw new AuthenticationException(e.getMessage(), e.getCause());
+            }
+
+        } catch (UnsupportedEncodingException e) {
+            throw new AuthenticationException(e.getMessage(), e.getCause());
+        }
+        return decodedIdentityData;
     }
 
     @Override

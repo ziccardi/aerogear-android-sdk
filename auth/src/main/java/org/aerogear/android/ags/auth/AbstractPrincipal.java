@@ -16,9 +16,9 @@ public abstract class AbstractPrincipal implements IUserPrincipal {
      * @param authenticator authenticator that authenticated this principal
      */
     protected AbstractPrincipal (AbstractAuthenticator authenticator) {
-        if (authenticator == null) {
-            throw new NullPointerException("Authenticator can't be null");
-        }
+//        if (authenticator == null) {
+//            throw new NullPointerException("Authenticator can't be null");
+//        }
 
         this.authenticator = authenticator;
     }

@@ -1,6 +1,7 @@
 package org.aerogear.mobile.example.ui;
 
 import android.databinding.ObservableArrayList;
+import android.net.Uri;
 import android.os.Bundle;
 import android.support.annotation.Nullable;
 import android.support.v7.widget.LinearLayoutManager;
@@ -10,6 +11,7 @@ import com.github.nitrico.lastadapter.LastAdapter;
 import com.google.gson.Gson;
 import com.google.gson.reflect.TypeToken;
 
+import org.aerogear.android.ags.auth.AuthService;
 import org.aerogear.mobile.core.executor.AppExecutors;
 import org.aerogear.mobile.core.http.HttpRequest;
 import org.aerogear.mobile.core.http.HttpResponse;

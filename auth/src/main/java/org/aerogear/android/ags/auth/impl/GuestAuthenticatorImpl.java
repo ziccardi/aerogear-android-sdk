@@ -47,12 +47,16 @@ public class GuestAuthenticatorImpl extends AbstractAuthenticator {
      * @throws AuthenticationException
      */
     public Principal authenticate(final ICredential credential) {
-        return UserPrincipalImpl
+        try {
+            return UserPrincipalImpl
                 .newUser()
                 .withAuthenticator(this)
                 .withUsername(guestUser)
                 .withRoles(roles)
                 .build();
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
     }
 
     @Override
