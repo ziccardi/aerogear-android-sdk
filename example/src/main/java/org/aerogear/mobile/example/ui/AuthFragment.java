@@ -10,6 +10,8 @@ import android.support.v7.widget.RecyclerView;
 import com.github.nitrico.lastadapter.LastAdapter;
 
 import org.aerogear.android.ags.auth.AuthService;
+import org.aerogear.android.ags.auth.AuthenticationException;
+import org.aerogear.android.ags.auth.credentials.KeyCloakWebCredentials;
 import org.aerogear.mobile.example.BR;
 import org.aerogear.mobile.example.R;
 
@@ -39,7 +41,11 @@ public class AuthFragment extends BaseFragment {
 
         AuthService authService = (AuthService) activity.mobileCore.getInstance(AuthService.class);
         authService.init(this.getContext().getApplicationContext());
-        authService.performAuthRequest(this.getContext().getApplicationContext(), Uri.parse("org.aerogear.mobile.example:/callback"), this.getActivity());
+        try {
+            authService.login(new KeyCloakWebCredentials(this.getContext().getApplicationContext(), Uri.parse("org.aerogear.mobile.example:/callback"), this.getActivity()));
+        } catch (AuthenticationException e) {
+            e.printStackTrace();
+        }
     }
 
     public void addElement(String key, String val) {

@@ -8,6 +8,9 @@ import java.security.Principal;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.Set;
+import java.util.concurrent.Future;
+
+import java8.util.concurrent.CompletableFuture;
 
 /**
  * Simple authenticator to return 'guest' users.
@@ -44,16 +47,18 @@ public class GuestAuthenticatorImpl extends AbstractAuthenticator {
      * Simply returns a user with username {@link #guestUser}
      * @param credential user credential
      * @return a user with username {@link #guestUser}
-     * @throws AuthenticationException
      */
-    public Principal authenticate(final ICredential credential) {
+    public Future<Principal> authenticate(final ICredential credential) {
         try {
-            return UserPrincipalImpl
+            CompletableFuture res = new CompletableFuture();
+
+            res.complete(UserPrincipalImpl
                 .newUser()
                 .withAuthenticator(this)
                 .withUsername(guestUser)
                 .withRoles(roles)
-                .build();
+                .build());
+            return res;
         } catch (Exception e) {
             throw new RuntimeException(e);
         }

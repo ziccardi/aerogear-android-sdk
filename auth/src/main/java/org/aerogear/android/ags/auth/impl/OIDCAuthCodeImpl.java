@@ -1,12 +1,35 @@
 package org.aerogear.android.ags.auth.impl;
 
+import android.app.Activity;
+import android.content.Context;
+import android.content.Intent;
+import android.net.Uri;
+import android.support.annotation.Nullable;
 import android.util.Base64;
 
+import net.openid.appauth.AppAuthConfiguration;
+import net.openid.appauth.AuthState;
+import net.openid.appauth.AuthorizationException;
+import net.openid.appauth.AuthorizationRequest;
+import net.openid.appauth.AuthorizationResponse;
+import net.openid.appauth.AuthorizationService;
+import net.openid.appauth.AuthorizationServiceConfiguration;
+import net.openid.appauth.ResponseTypeValues;
+import net.openid.appauth.TokenResponse;
+import net.openid.appauth.browser.BrowserBlacklist;
+import net.openid.appauth.browser.VersionedBrowserMatcher;
+
+import org.aerogear.android.ags.auth.AuthStateManager;
 import org.aerogear.android.ags.auth.AuthenticationException;
+import org.aerogear.android.ags.auth.Callback;
+import org.aerogear.android.ags.auth.IUserPrincipal;
 import org.aerogear.android.ags.auth.RoleType;
 import org.aerogear.android.ags.auth.UserRole;
+import org.aerogear.android.ags.auth.configuration.AuthenticationConfiguration;
 import org.aerogear.android.ags.auth.credentials.ICredential;
+import org.aerogear.android.ags.auth.credentials.KeyCloakWebCredentials;
 import org.aerogear.android.ags.auth.credentials.OIDCCredentials;
+import org.aerogear.android.ags.auth.debug.ConnectionBuilderForTesting;
 import org.aerogear.mobile.core.configuration.ServiceConfiguration;
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -15,12 +38,16 @@ import java.io.UnsupportedEncodingException;
 import java.security.Principal;
 import java.util.HashSet;
 import java.util.Set;
+import java.util.concurrent.Future;
+import java.util.concurrent.Semaphore;
+
+import java8.util.concurrent.CompletableFuture;
 
 
 /**
  * Authenticates the user by using OpenID Connect.
  */
-public class OIDCAuthCodeImpl extends OIDCTokenAuthenticatorImpl {
+public class OIDCAuthCodeImpl {
 
     private static final String USERNAME = "preferred_username";
     private static final String EMAIL = "email";
@@ -32,13 +59,21 @@ public class OIDCAuthCodeImpl extends OIDCTokenAuthenticatorImpl {
 
     private JSONObject userIdentity = new JSONObject();
 
+    private static final int LOGIN_REQUEST_CODE = 1;
+
+    private AuthState authState;
+
+    private AuthorizationService authService;
+
+    private final ServiceConfiguration serviceConfig;
+
     /**
      * Creates a new OIDCAuthCodeImpl object
      *
      * @param serviceConfig {@link ServiceConfiguration}
      */
     public OIDCAuthCodeImpl(final ServiceConfiguration serviceConfig) {
-        super(serviceConfig);
+        this.serviceConfig = serviceConfig;
     }
 
     /**
@@ -47,25 +82,80 @@ public class OIDCAuthCodeImpl extends OIDCTokenAuthenticatorImpl {
      * @param credential the OIDC credential for the user
      * @return a new OIDCUserPrincipalImpl object with the user's identity {@link #userIdentity} that was decoded from the user's credential
      * @throws AuthenticationException
-     * @see OIDCTokenAuthenticatorImpl#authenticate(ICredential)
      */
-    @Override
-    public Principal authenticate(final ICredential credential) throws AuthenticationException {
-        OIDCUserPrincipalImpl user;
-        try {
-            userIdentity = getIdentityInformation(credential);
-            user = (OIDCUserPrincipalImpl) OIDCUserPrincipalImpl
-                .newUser()
-                .withAuthenticator(this)
-                .withUsername(parseUsername())
-                .withCredentials(credential)
-                .withEmail(parseEmail())
-                .withRoles(parseRoles())
-                .build();
-        } catch (JSONException e) {
-            throw new AuthenticationException(e.getMessage(), e.getCause());
+    public void authenticate(final ICredential credential) throws AuthenticationException {
+        KeyCloakWebCredentials keyCloakWebCredentials = (KeyCloakWebCredentials) (credential);
+
+        performAuthRequest(keyCloakWebCredentials.getCtx(), keyCloakWebCredentials.getRedirectUri(), keyCloakWebCredentials.getFromActivity());
+    }
+
+    // Authentication code
+    private void performAuthRequest(final Context ctx, final Uri redirectUri, final Activity fromActivity) {
+
+        AuthenticationConfiguration authConfig = new AuthenticationConfiguration(serviceConfig);
+        AuthorizationServiceConfiguration authServiceConfig = new AuthorizationServiceConfiguration(
+            authConfig.getAuthenticationEndpoint(),
+            authConfig.getTokenEndpoint()
+        );
+
+        this.authState = new AuthState(authServiceConfig);
+        OIDCCredentials credentials = new OIDCCredentials(authState.jsonSerializeString(), null);
+        AuthStateManager.getInstance().save(credentials);
+
+        AppAuthConfiguration appAuthConfig = new AppAuthConfiguration.Builder()
+            .setBrowserMatcher(new BrowserBlacklist(
+                VersionedBrowserMatcher.CHROME_CUSTOM_TAB))
+            .setConnectionBuilder(new ConnectionBuilderForTesting())
+            .build();
+
+        this.authService = new AuthorizationService(ctx, appAuthConfig);
+        //this.authService = authService;
+        AuthorizationRequest authRequest = new AuthorizationRequest.Builder(
+            authServiceConfig,
+            authConfig.getClientId(),
+            ResponseTypeValues.CODE,
+            redirectUri).build();
+
+        Intent authIntent = authService.getAuthorizationRequestIntent(authRequest);
+        ((Activity)fromActivity).startActivityForResult(authIntent, LOGIN_REQUEST_CODE);
+    }
+
+    public void handleAuthResult(Intent intent, Callback<Principal> callback) {
+        AuthorizationResponse response = AuthorizationResponse.fromIntent(intent);
+        AuthorizationException error = AuthorizationException.fromIntent(intent);
+
+        authState.update(response, error);
+        AuthStateManager.getInstance().save(new OIDCCredentials(authState.jsonSerializeString(), null));
+
+        if (response != null) {
+            exchangeTokens(response, callback);
+        } else {
+            callback.onError(error);
         }
-    return user;
+    }
+
+    private void exchangeTokens(final AuthorizationResponse response, Callback<Principal> callback) {
+        authService.performTokenRequest(response.createTokenExchangeRequest(), new AuthorizationService.TokenResponseCallback() {
+            @Override
+            public void onTokenRequestCompleted(@Nullable TokenResponse tokenResponse, @Nullable AuthorizationException exception) {
+                if (tokenResponse != null) {
+                    authState.update(tokenResponse, exception);
+                    AuthStateManager.getInstance().save(new OIDCCredentials(authState.jsonSerializeString(), null));
+
+                    OIDCCredentials credentials = AuthStateManager.getInstance().load();
+                    try {
+                        UserPrincipalImpl user = UserPrincipalImpl.newUser()
+                            .withCredentials(credentials)
+                            .build();
+                        callback.onSuccess(user);
+                    } catch(Exception e) {
+                        callback.onError(e);
+                    }
+                } else {
+                    callback.onError(exception);
+                }
+            }
+        });
     }
 
     /**
@@ -154,7 +244,7 @@ public class OIDCAuthCodeImpl extends OIDCTokenAuthenticatorImpl {
     private Set<UserRole> parseClientRoles() throws JSONException {
         Set<UserRole> clientRoles = new HashSet<>();
 
-        ServiceConfiguration serviceConfig = this.getServiceConfig();
+        ServiceConfiguration serviceConfig = this.serviceConfig;
 
         if (serviceConfig.getProperty(RESOURCE) != null) {
             String initialClientID = serviceConfig.getProperty(RESOURCE);  //immediate client role

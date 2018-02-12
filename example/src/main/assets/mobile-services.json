@@ -1,21 +1,21 @@
 {
     "version": 1,
-    "clusterName": "replaceme",
-    "namespace": "replaceme",
-    "clientId": "replaceme",
+    "clusterName": "https://192.168.37.1:8443",
+    "namespace": "myproject",
+    "clientId": "app-cordova",
     "services": [
         {
-            "id": "replaceme",
-            "name": "replaceme",
-            "type": "replaceme",
-            "url": "replaceme",
+            "id": "keycloak",
+            "name": "keycloak",
+            "type": "keycloak",
+            "url": "https://keycloak.security.feedhenry.org",
             "config": {
-                "auth-server-url": "replaceme",
-                "clientId": "replaceme",
-                "realm": "replaceme",
-                "resource": "replaceme",
-                "ssl-required": "replaceme",
-                "url": "replaceme"
+                "auth-server-url": "https://keycloak.security.feedhenry.org/auth",
+                "clientId": "client-app",
+                "realm": "secure-app",
+                "resource": "client-app",
+                "ssl-required": "external",
+                "url": "https://keycloak.security.feedhenry.org/auth"
             }
         }
     ]

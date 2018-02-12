@@ -9,6 +9,7 @@ import android.support.v4.view.GravityCompat;
 import android.support.v4.widget.DrawerLayout;
 import android.support.v7.app.ActionBarDrawerToggle;
 import android.support.v7.widget.Toolbar;
+import android.util.IntProperty;
 import android.util.Log;
 import android.view.MenuItem;
 
@@ -16,6 +17,8 @@ import org.aerogear.android.ags.auth.AuthService;
 import org.aerogear.android.ags.auth.Callback;
 import org.aerogear.android.ags.auth.IUserPrincipal;
 import org.aerogear.mobile.example.R;
+
+import java.security.Principal;
 
 import butterknife.BindView;
 import butterknife.ButterKnife;
@@ -85,9 +88,9 @@ public class MainActivity extends BaseActivity
     public void onActivityResult(int requestCode, int resultCode, Intent data) {
         if (requestCode == AuthService.LOGIN_REQUEST_CODE) {
             AuthService authService = (AuthService) mobileCore.getInstance(AuthService.class);
-            authService.handleAuthResponse(data, new Callback<IUserPrincipal>() {
+            authService.handleAuthResult(data, new Callback<Principal>() {
                 @Override
-                public void onSuccess(IUserPrincipal user) {
+                public void onSuccess(Principal user) {
                     authFragment.addElement("You are logged in!");
                     authFragment.addElement("Username", user.getName());
                 }

@@ -4,6 +4,7 @@ import org.aerogear.android.ags.auth.credentials.ICredential;
 import org.aerogear.mobile.core.configuration.ServiceConfiguration;
 
 import java.security.Principal;
+import java.util.concurrent.Future;
 
 /**
  * Base class for all authenticators
@@ -24,9 +25,8 @@ public class AbstractAuthenticator {
      * This method must be overridden with the custom authentication for the given credential.
      *
      * @param credential user credential
-     * @return the authenticated principal
      */
-    public Principal authenticate(final ICredential credential) throws AuthenticationException {
+    public void authenticate(final ICredential credential, final Callback<Principal> callback) throws AuthenticationException {
         throw new IllegalStateException("Not implemented");
     }
 
