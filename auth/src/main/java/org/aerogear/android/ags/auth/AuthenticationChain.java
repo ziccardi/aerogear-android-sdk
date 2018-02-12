@@ -71,7 +71,7 @@ public class AuthenticationChain {
             return authenticator;
         }
 
-        public Principal authenticate(final ICredential credential) throws AuthenticationException {
+        public Future<Principal> authenticate(final ICredential credential) throws AuthenticationException {
             try {
                 return authenticator.authenticate(credential);
             } catch (AuthenticationException ae) {
@@ -154,7 +154,7 @@ public class AuthenticationChain {
             @Override
             public Principal call() throws Exception {
                 for(AuthenticationRing ring : chain) {
-                    Principal principal = ring.authenticate(credential);
+                    Principal principal = ring.authenticate(credential).get();
                     if (principal != null) {
                         return principal;
                     }

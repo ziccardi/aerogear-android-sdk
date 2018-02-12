@@ -15,13 +15,15 @@ import android.view.MenuItem;
 import org.aerogear.android.ags.auth.AuthService;
 import org.aerogear.android.ags.auth.Callback;
 import org.aerogear.android.ags.auth.IUserPrincipal;
+import org.aerogear.android.ags.auth.impl.IActivityAuthResultHandler;
+import org.aerogear.android.ags.auth.impl.IKeycloakAuthActivity;
 import org.aerogear.mobile.example.R;
 
 import butterknife.BindView;
 import butterknife.ButterKnife;
 
 public class MainActivity extends BaseActivity
-    implements NavigationView.OnNavigationItemSelectedListener {
+    implements NavigationView.OnNavigationItemSelectedListener, IKeycloakAuthActivity {
 
     private AuthFragment authFragment;
 
@@ -33,6 +35,8 @@ public class MainActivity extends BaseActivity
 
     @BindView(R.id.nav_view)
     NavigationView navigationView;
+
+    private IActivityAuthResultHandler handler;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -84,19 +88,20 @@ public class MainActivity extends BaseActivity
     @Override
     public void onActivityResult(int requestCode, int resultCode, Intent data) {
         if (requestCode == AuthService.LOGIN_REQUEST_CODE) {
-            AuthService authService = (AuthService) mobileCore.getInstance(AuthService.class);
-            authService.handleAuthResponse(data, new Callback<IUserPrincipal>() {
-                @Override
-                public void onSuccess(IUserPrincipal user) {
-                    authFragment.addElement("You are logged in!");
-                    authFragment.addElement("Username", user.getName());
-                }
-
-                @Override
-                public void onError(Throwable error) {
-                    authFragment.addElement("Login failed", error.getMessage());
-                }
-            });
+            handler.onResult();
+//            AuthService authService = (AuthService) mobileCore.getInstance(AuthService.class);
+//            authService.handleAuthResponse(data, new Callback<IUserPrincipal>() {
+//                @Override
+//                public void onSuccess(IUserPrincipal user) {
+//                    authFragment.addElement("You are logged in!");
+//                    authFragment.addElement("Username", user.getName());
+//                }
+//
+//                @Override
+//                public void onError(Throwable error) {
+//                    authFragment.addElement("Login failed", error.getMessage());
+//                }
+//            });
         }
     }
 
@@ -107,4 +112,8 @@ public class MainActivity extends BaseActivity
             .commit();
     }
 
+    @Override
+    public void setCallBack(IActivityAuthResultHandler handler) {
+        this.handler = handler;
+    }
 }

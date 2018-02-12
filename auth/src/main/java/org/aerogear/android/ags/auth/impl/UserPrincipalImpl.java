@@ -4,6 +4,7 @@ import android.util.Base64;
 
 import org.aerogear.android.ags.auth.AbstractAuthenticator;
 import org.aerogear.android.ags.auth.AbstractPrincipal;
+import org.aerogear.android.ags.auth.AuthenticationException;
 import org.aerogear.android.ags.auth.RoleType;
 import org.aerogear.android.ags.auth.UserRole;
 import org.aerogear.android.ags.auth.credentials.ICredential;
@@ -11,6 +12,7 @@ import org.aerogear.android.ags.auth.credentials.OIDCCredentials;
 import org.json.JSONException;
 import org.json.JSONObject;
 
+import java.io.UnsupportedEncodingException;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.Iterator;
@@ -237,5 +239,10 @@ public class UserPrincipalImpl extends AbstractPrincipal {
                 ", email='" + email + '\'' +
                 ", roles=" + roleNames +
                 '}';
+    }
+
+    @Override
+    public String getEmail() {
+        return email;
     }
 }

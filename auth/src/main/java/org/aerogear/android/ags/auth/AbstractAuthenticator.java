@@ -4,6 +4,7 @@ import org.aerogear.android.ags.auth.credentials.ICredential;
 import org.aerogear.mobile.core.configuration.ServiceConfiguration;
 
 import java.security.Principal;
+import java.util.concurrent.Future;
 
 /**
  * Base class for all authenticators
@@ -26,7 +27,7 @@ public class AbstractAuthenticator {
      * @param credential user credential
      * @return the authenticated principal
      */
-    public Principal authenticate(final ICredential credential) throws AuthenticationException {
+    public Future<Principal> authenticate(final ICredential credential) throws AuthenticationException {
         throw new IllegalStateException("Not implemented");
     }
 
