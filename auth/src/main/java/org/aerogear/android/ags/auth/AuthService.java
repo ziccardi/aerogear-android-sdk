@@ -1,13 +1,10 @@
 package org.aerogear.android.ags.auth;
 
-import android.annotation.SuppressLint;
 import android.app.Activity;
 import android.content.Context;
 import android.content.Intent;
 import android.net.Uri;
-import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
-import android.util.Log;
 
 import net.openid.appauth.AppAuthConfiguration;
 import net.openid.appauth.AuthState;
@@ -20,7 +17,6 @@ import net.openid.appauth.ResponseTypeValues;
 import net.openid.appauth.TokenResponse;
 import net.openid.appauth.browser.BrowserBlacklist;
 import net.openid.appauth.browser.VersionedBrowserMatcher;
-import net.openid.appauth.connectivity.ConnectionBuilder;
 
 import org.aerogear.android.ags.auth.configuration.AuthenticationConfiguration;
 import org.aerogear.android.ags.auth.credentials.ICredential;
@@ -28,31 +24,13 @@ import org.aerogear.android.ags.auth.credentials.OIDCCredentials;
 import org.aerogear.android.ags.auth.debug.ConnectionBuilderForTesting;
 import org.aerogear.android.ags.auth.impl.OIDCAuthCodeImpl;
 import org.aerogear.android.ags.auth.impl.OIDCTokenAuthenticatorImpl;
-import org.aerogear.android.ags.auth.impl.OIDCUserPrincipalImpl;
 import org.aerogear.android.ags.auth.impl.UserPrincipalImpl;
 import org.aerogear.mobile.core.MobileCore;
 import org.aerogear.mobile.core.ServiceModule;
 import org.aerogear.mobile.core.configuration.ServiceConfiguration;
-import org.jose4j.jwk.Use;
-import org.json.JSONException;
-import org.json.JSONObject;
-
-import java.io.IOException;
-import java.net.HttpURLConnection;
-import java.net.URL;
-import java.security.KeyManagementException;
-import java.security.NoSuchAlgorithmException;
 import java.security.Principal;
-import java.util.ArrayList;
 import java.util.concurrent.Future;
-import java.util.concurrent.TimeUnit;
 
-import javax.net.ssl.HostnameVerifier;
-import javax.net.ssl.SSLContext;
-import javax.net.ssl.SSLSession;
-import javax.net.ssl.TrustManager;
-import javax.net.ssl.X509TrustManager;
-import java.security.cert.X509Certificate;
 /**
  * Entry point for authenticating users.
  */
@@ -92,7 +70,7 @@ public class AuthService implements ServiceModule {
         return authenticatorChain.authenticate(credentials);
     }
 
-    public void performAuthRequest(final Context ctx, Uri redirectUri, final Activity fromActivity) {
+    public void login(final Context ctx, Uri redirectUri, final Activity fromActivity) {
         AuthenticationConfiguration authConfig = new AuthenticationConfiguration(serviceConfiguration);
         AuthorizationServiceConfiguration authServiceConfig = new AuthorizationServiceConfiguration(
             authConfig.getAuthenticationEndpoint(),
